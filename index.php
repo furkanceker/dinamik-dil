@@ -1,13 +1,15 @@
 <?php 
 require_once 'baglan.php'; 
-
+if(!isset($_SESSION['anasayfadil'])){
+    $_SESSION['anasayfadil'] = 1;
+}
 if(isset($_GET['dildegistir'])){
     $dil = $_GET['dildegistir'];
-    $_SESSION['dil'] = $dil;
-}else{
-    $_SESSION['dil'] = 1;
+    $_SESSION['anasayfadil'] = $dil;
+    header('Location:'.$_SERVER['HTTP_REFERER']);
 }
 ?>
+
 <!doctype html>
 <html lang="en">
   <head>
@@ -33,7 +35,7 @@ if(isset($_GET['dildegistir'])){
                     if($diller->rowCount()){
                         foreach($diller as $row){
                             ?>
-                            <a class="dropdown-item" href="ekle.php?dildegistir=<?= $row['dil_id'] ?>"><img src="bayrak/<?= $row['dil_bayrak'] ?>" width="10%" alt="logo"> <?= $row['dil_ad'] ?></a>
+                            <a class="dropdown-item" href="index.php?dildegistir=<?= $row['dil_id'] ?>"><img src="bayrak/<?= $row['dil_bayrak'] ?>" width="10%" alt="logo"> <?= $row['dil_ad'] ?></a>
                             <?php
                         }
                     }else{
@@ -43,41 +45,35 @@ if(isset($_GET['dildegistir'])){
                 
             </div>
         </div>
-        <?php 
-        if($_POST){
-            $baslik = strip_tags(trim($_POST['baslik']));
-            $sef = sef_link($baslik);
-            $icerik = $_POST['icerik'];
-            if(!$baslik || !$icerik){
-                echo "<div class='alert alert-danger>Boş Alanları Doldurun</div>'";
-            }else{
-                $ekle = $db->prepare("INSERT INTO konular SET
-                    baslik=:b,
-                    sef=:s,
-                    icerik=:i,
-                    dil_id=:dil
-                ");
-                $sonuc = $ekle->execute(array(
-                    ":b"=>$baslik,
-                    ":s"=>$sef,
-                    ":i"=>$icerik,
-                    ":dil"=>$_SESSION['dil']
-                ));
-                if($sonuc){
-                    echo "<div class='alert alert-success'>Konu Eklendi</div>";
-                }else{
-                    echo "<div class='alert alert-danger'>Konu Eklenemedi</div>'";
-                }
-            }
-        }
-        ?>
-            <form action="" method="POST">
-                <input type="text" name="baslik" placeholder="Başlık" class="form-control">
-                <br>
-                <textarea name="icerik" placeholder="Başlık" class="form-control" cols="30" rows="10"></textarea>
-                <br>
-                <button type="submit" class="btn btn-success">Konu Ekle</button>
-            </form>
+        <table class="table table-hover">
+            <thead>
+                <th>ID</th>
+                <th>BAŞLIK</th>
+                <th>SEF</th>
+                <th>İÇERİK</th>
+            </thead>
+            <tbody>
+                <?php
+                    $konular = $db->prepare("select * from konular where dil_id=:id");
+                    $konular->execute([':id'=>$_SESSION['anasayfadil']]);
+                    if($konular->rowCount()){
+                        foreach($konular as $row){
+                            ?>
+                            <tr>
+                                <td><?= $row['id']; ?></td>
+                                <td><?= $row['baslik']; ?></td>
+                                <td><?= $row['sef']; ?></td>
+                                <td><?= $row['icerik']; ?></td>
+                            </tr>
+
+                            <?php
+                        }
+                    }else{
+                        echo "<div class='alert alert-danger'>Bu Dile Ait İçerik Yok</div>";
+                    }
+                ?>
+            </tbody>
+        </table>
     </div>
 
 
